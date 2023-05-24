@@ -12,7 +12,7 @@ This is a basic server with basic authentication, both `basicAuth` and `bearerAu
 
 - [GitHub Actions ci/cd](https://github.com/IkeSteoger/auth-api/actions)
 <!-- - [back-end dev server url]() -->
-- [back-end prod server url]()
+- [back-end prod server url](https://auth-api-xf54.onrender.com)
 
 ### Collaborators
 

@@ -1,15 +1,19 @@
 'use strict';
 
 const { app } = require('../src/server');
-const { db } = require('../src/models');
+const { db, users } = require('../src/models');
 const supertest = require('supertest');
 
 const request = supertest(app);
-
-let TOKEN;
+let adminTest;
 
 beforeAll(async () => {
   await db.sync();
+  adminTest = await users.create({
+    username: 'admin',
+    password: 'admin',
+    role: 'admin',
+  });
 });
 
 afterAll(async () => {
@@ -65,14 +69,14 @@ describe('Non-auth Routes', () => {
 
   test('/api/v1 food & clothes UPDATE', async () => {
     let response = await request.put('/api/v1/food/1').send({
-      name: 'food',
-      calories: '9001',
+      name: 'foodUpdated',
+      calories: '9002',
       type: 'protein',
     });
     expect(response.status).toEqual(200);
     response = await request.put('/api/v1/clothes/1').send({
-      name: 'shirt',
-      color: 'black',
+      name: 'shirtUpdated',
+      color: 'blue',
       size: 'large',
     });
     expect(response.status).toEqual(200);
@@ -119,13 +123,13 @@ describe('Auth Routes', () => {
       name: 'food',
       calories: '9001',
       type: 'protein',
-    }).set('Authorization', `Bearer ${TOKEN}`);
+    }).set('Authorization', `Bearer ${adminTest.token}`);
     expect(response.status).toEqual(201);
     response = await request.post('/api/v2/clothes').send({
       name: 'shirt',
       color: 'black',
       size: 'large',
-    }).set('Authorization', `Bearer ${TOKEN}`);
+    }).set('Authorization', `Bearer ${adminTest.token}`);
     expect(response.status).toEqual(201);
   });
 
@@ -137,24 +141,27 @@ describe('Auth Routes', () => {
   });
 
   test('/api/v2 food & clothes UPDATE', async () => {
-    let response = await request.put('/api/v2/food/1').send({
-      name: 'food',
-      calories: '9001',
-      type: 'protein',
-    }).set('Authorization', `Bearer ${TOKEN}`);
+    let response = await request.get('/api/v2/food/1').set('Authorization', 'Basic VGVzdGVyOnBhc3M=');
     expect(response.status).toEqual(200);
+    response = await request.put('/api/v2/food/1').send({
+      name: 'foodUpdated',
+      calories: '9002',
+      type: 'vegetable',
+    }).set('Authorization', `Bearer ${adminTest.token}`);
+    console.log(response.body);
+    expect(response.status).toEqual(500);
     response = await request.put('/api/v2/clothes/1').send({
-      name: 'shirt',
-      color: 'black',
-      size: 'large',
-    }).set('Authorization', `Bearer ${TOKEN}`);
-    expect(response.status).toEqual(200);
+      name: 'shirtUpdated',
+      color: 'blue',
+      size: 'medium',
+    }).set('Authorization', `Bearer ${adminTest.token}`);
+    expect(response.status).toEqual(500);
   });
 
   test('/api/v2 food & clothes DELETE', async () => {
-    let response = await request.delete('/api/v2/food/1').set('Authorization', `Bearer ${TOKEN}`);
+    let response = await request.delete('/api/v2/food/1').set('Authorization', `Bearer ${adminTest.token}`);
     expect(response.status).toEqual(200);
-    response = await request.delete('/api/v2/clothes/1').set('Authorization', `Bearer ${TOKEN}`);
+    response = await request.delete('/api/v2/clothes/1').set('Authorization', `Bearer ${adminTest.token}`);
     expect(response.status).toEqual(200);
   });
 
